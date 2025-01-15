@@ -146,7 +146,7 @@
       <button type="button" id="prevButton" onclick="navigate(-1)" disabled>Anterior</button>
       <button type="button" id="nextButton" onclick="navigate(1)">Próximo</button>
       <button type="submit" id="submitButton" class="hidden">Enviar</button>
-      <button type="button" id="downloadHistoryButton" onclick="downloadHistory()">Baixar Histórico</button>
+      <button type="button" id="accessHistoryButton" onclick="accessHistory()">Acessar Histórico</button>
     </div>
     <div id="successMessage" class="hidden" style="color: green; margin-top: 20px;">
       Formulário enviado com sucesso!
@@ -337,7 +337,7 @@
       });
 
       // Enviar os dados para o Google Sheets via Google Apps Script
-      fetch('https://script.google.com/macros/s/AKfycbwPA_HaojDeezOaSwJJYSonNVzSPbHNgoFwf6-zSTwoJ0-bCbb810qYc9W-ydEv2iIH/exec', {
+      fetch('https://script.google.com/macros/s/AKfycbw5PsnPfKX0EnrG1zoo-DkEaTMvRWB52H4-Zw7WBFxJDIWus23jTtDbpl2iv9tkrno/exec', {
         method: 'POST',
         body: JSON.stringify(data), // Envia os dados no formato JSON
         headers: { 'Content-Type': 'application/json' }
@@ -350,6 +350,11 @@
         console.error('Error sending data to Google Sheets:', error);
       });
     });
+
+    // Função para acessar o Google Sheets (histórico)
+    function accessHistory() {
+      window.open('https://docs.google.com/spreadsheets/d/1uTNs-IW6P-R6r-88Caowj2hRsMwYaXgx9hdhl4NfP0U/edit?gid=0#gid=0', '_blank');
+    }
 
     renderSections();
   </script>
