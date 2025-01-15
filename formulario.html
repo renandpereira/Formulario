@@ -1,0 +1,379 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Formulário de Inspeção</title>
+  <script src="https://cdn.jsdelivr.net/npm/xlsx/dist/xlsx.full.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.4.0/jspdf.umd.min.js"></script>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap');
+
+    body {
+      font-family: 'Poppins', sans-serif;
+      margin: 0;
+      padding: 0;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      min-height: 100vh;
+      background: linear-gradient(135deg, #4e54c8, #8f94fb);
+      color: #fff;
+    }
+
+    h1 {
+      text-align: center;
+      font-size: 2.5em;
+      margin-bottom: 20px;
+    }
+
+    #inspectionForm {
+      background: #2e2e48;
+      padding: 30px;
+      border-radius: 15px;
+      box-shadow: 0px 4px 20px rgba(0, 0, 0, 0.3);
+      width: 90%;
+      max-width: 600px;
+      text-align: center;
+    }
+
+    .hidden {
+      display: none;
+    }
+
+    .section {
+      margin-bottom: 40px;
+      animation: fadeIn 0.5s ease-in-out;
+    }
+
+    .question {
+      margin-bottom: 20px;
+    }
+
+    .question label {
+      display: block;
+      margin-bottom: 10px;
+      font-weight: 400;
+    }
+
+    .radio-options {
+      display: flex;
+      justify-content: center;
+      gap: 20px;
+    }
+
+    .radio-options input {
+      margin-right: 10px;
+    }
+
+    .comment-field, .image-field {
+      margin-top: 10px;
+    }
+
+    .section-title {
+      margin-top: 20px;
+      font-size: 1.8em;
+      font-weight: 600;
+      text-transform: uppercase;
+      text-align: center;
+    }
+
+    .navigation {
+      margin-top: 20px;
+      text-align: center;
+    }
+
+    button {
+      padding: 10px 20px;
+      font-size: 16px;
+      margin-right: 10px;
+      border: none;
+      border-radius: 8px;
+      background: #4e54c8;
+      color: #fff;
+      cursor: pointer;
+      transition: background 0.3s;
+    }
+
+    button:hover {
+      background: #8f94fb;
+    }
+
+    button:disabled {
+      background: #555;
+      cursor: not-allowed;
+    }
+
+    textarea, input[type="file"] {
+      width: calc(100% - 20px);
+      margin: 10px auto;
+      border: none;
+      padding: 10px;
+      border-radius: 5px;
+      font-size: 14px;
+      display: block;
+    }
+
+    textarea {
+      resize: none;
+    }
+
+    label {
+      font-weight: 300;
+    }
+
+    @keyframes fadeIn {
+      from {
+        opacity: 0;
+        transform: translateY(10px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+  </style>
+</head>
+<body>
+  <form id="inspectionForm">
+    <h1>Formulário de Inspeção</h1>
+    <div id="formSections">
+      <!-- Cada seção será adicionada dinamicamente pelo JavaScript -->
+    </div>
+
+    <!-- Navegação -->
+    <div class="navigation">
+      <button type="button" id="prevButton" onclick="navigate(-1)" disabled>Anterior</button>
+      <button type="button" id="nextButton" onclick="navigate(1)">Próximo</button>
+      <button type="submit" id="submitButton" class="hidden">Enviar</button>
+    </div>
+  </form>
+
+  <script>
+    const sections = [
+      {
+        title: "REFEITÓRIO",
+        questions: [
+          "O bebedouro do local está funcionando?",
+          "Existe porta copos no local e está funcional?",
+          "Se existe porta copos, ele está abastecido com copos?",
+          "As mesas do local estão em perfeitas condições?",
+          "As geladeiras do local estão funcionando?",
+          "Existem marmitas com sacolas ou sem data de validade?",
+          "Existem itens para higiene após a refeição (água, sabão)?"
+        ]
+      },
+      {
+        title: "ÁREA COMUM (ÁREA DE DESCANSO)",
+        questions: [
+          "O bebedouro do local está funcionando?"
+        ]
+      },
+      {
+        title: "BANHEIRO MASCULINO",
+        questions: [
+          "Todas as cabines têm assentos sanitários?",
+          "Todas as cabines têm porta?",
+          "Todas as cabines têm porta-papel higiênico?",
+          "Todas as cabines têm lixo com tampa?",
+          "Todas as cabines têm papel higiênico disponível?",
+          "Todos os porta-sabão estão em perfeito estado de uso e abastecidos?",
+          "Todos os porta-papel toalha estão em perfeito estado de uso e abastecidos?",
+          "Todos os chuveiros estão em perfeito estado de funcionamento?",
+          "Existe controle visual da última vez que o banheiro foi limpo e ele está preenchido corretamente?"
+        ]
+      },
+      {
+        title: "BANHEIRO FEMININO",
+        questions: [
+          "Todas as cabines têm assentos sanitários?",
+          "Todas as cabines têm porta?",
+          "Todas as cabines têm porta-papel higiênico?",
+          "Todas as cabines têm lixo com tampa?",
+          "Todas as cabines têm papel higiênico disponível?",
+          "Todos os porta-sabão estão em perfeito estado de uso e abastecidos?",
+          "Todos os porta-papel toalha estão em perfeito estado de uso e abastecidos?",
+          "Todos os chuveiros estão em perfeito estado de funcionamento?",
+          "Existe controle visual da última vez que o banheiro foi limpo e ele está preenchido corretamente?"
+        ]
+      },
+      {
+        title: "OPERACIONAL",
+        questions: [
+          "Todos os bebedouros do local estão funcionando?",
+          "Existe porta copos no local e está funcional?",
+          "Se existe porta copos, ele está abastecido com copos?",
+          "Todas as saídas de emergência estão desobstruídas?"
+        ]
+      }
+    ];
+
+    let currentSectionIndex = 0;
+
+    function renderSections() {
+      const formSections = document.getElementById('formSections');
+      formSections.innerHTML = '';
+      sections.forEach((section, sectionIndex) => {
+        const sectionDiv = document.createElement('div');
+        sectionDiv.classList.add('section');
+        sectionDiv.id = `section-${sectionIndex}`;
+        if (sectionIndex !== currentSectionIndex) {
+          sectionDiv.classList.add('hidden');
+        }
+
+        const title = document.createElement('div');
+        title.classList.add('section-title');
+        title.innerText = section.title;
+        sectionDiv.appendChild(title);
+
+        section.questions.forEach((question, questionIndex) => {
+          const questionDiv = document.createElement('div');
+          questionDiv.classList.add('question');
+
+          const label = document.createElement('label');
+          label.innerText = `${questionIndex + 1}. ${question}`;
+          questionDiv.appendChild(label);
+
+          const optionsDiv = document.createElement('div');
+          optionsDiv.classList.add('radio-options');
+
+          const yesInput = document.createElement('input');
+          yesInput.type = 'radio';
+          yesInput.name = `section${sectionIndex}_q${questionIndex}`;
+          yesInput.value = 'sim';
+          yesInput.onclick = () => toggleFields(`section${sectionIndex}_q${questionIndex}`, false);
+          optionsDiv.appendChild(yesInput);
+          optionsDiv.appendChild(document.createTextNode('SIM'));
+
+          const noInput = document.createElement('input');
+          noInput.type = 'radio';
+          noInput.name = `section${sectionIndex}_q${questionIndex}`;
+          noInput.value = 'não';
+          noInput.onclick = () => toggleFields(`section${sectionIndex}_q${questionIndex}`, true);
+          optionsDiv.appendChild(noInput);
+          optionsDiv.appendChild(document.createTextNode('NÃO'));
+
+          questionDiv.appendChild(optionsDiv);
+
+          const fieldsDiv = document.createElement('div');
+          fieldsDiv.id = `section${sectionIndex}_q${questionIndex}-fields`;
+          fieldsDiv.classList.add('hidden');
+
+          const commentField = document.createElement('div');
+          commentField.classList.add('comment-field');
+          const commentLabel = document.createElement('label');
+          commentLabel.innerText = 'Comentário:';
+          const commentTextarea = document.createElement('textarea');
+          commentTextarea.name = `section${sectionIndex}_q${questionIndex}_comment`;
+          commentField.appendChild(commentLabel);
+          commentField.appendChild(commentTextarea);
+
+          const imageField = document.createElement('div');
+          imageField.classList.add('image-field');
+          const imageLabel = document.createElement('label');
+          imageLabel.innerText = 'Insira uma imagem:';
+          const imageInput = document.createElement('input');
+          imageInput.type = 'file';
+          imageInput.name = `section${sectionIndex}_q${questionIndex}_image`;
+          imageField.appendChild(imageLabel);
+          imageField.appendChild(imageInput);
+
+          fieldsDiv.appendChild(commentField);
+          fieldsDiv.appendChild(imageField);
+
+          questionDiv.appendChild(fieldsDiv);
+          sectionDiv.appendChild(questionDiv);
+        });
+
+        formSections.appendChild(sectionDiv);
+      });
+    }
+
+    function toggleFields(questionId, show) {
+      const fieldsDiv = document.getElementById(`${questionId}-fields`);
+      if (fieldsDiv) {
+        fieldsDiv.classList.toggle('hidden', !show);
+      }
+    }
+
+    function navigate(direction) {
+      const totalSections = sections.length;
+      document.getElementById(`section-${currentSectionIndex}`).classList.add('hidden');
+      currentSectionIndex += direction;
+
+      if (currentSectionIndex < 0) currentSectionIndex = 0;
+      if (currentSectionIndex >= totalSections) currentSectionIndex = totalSections - 1;
+
+      document.getElementById(`section-${currentSectionIndex}`).classList.remove('hidden');
+
+      document.getElementById('prevButton').disabled = currentSectionIndex === 0;
+      document.getElementById('nextButton').classList.toggle('hidden', currentSectionIndex === totalSections - 1);
+      document.getElementById('submitButton').classList.toggle('hidden', currentSectionIndex !== totalSections - 1);
+    }
+
+    async function generatePDF(data) {
+      const { jsPDF } = window.jspdf;
+      const doc = new jsPDF();
+
+      doc.setFontSize(16);
+      doc.text('Relatório de Inspeção', 105, 20, { align: 'center' });
+
+      let y = 30;
+
+      data.forEach((item, index) => {
+        doc.setFontSize(12);
+        doc.text(`Seção: ${item.Seção}`, 10, y);
+        y += 10;
+        doc.text(`Pergunta: ${item.Pergunta}`, 10, y);
+        y += 10;
+        doc.text(`Resposta: ${item.Resposta}`, 10, y);
+        y += 10;
+        doc.text(`Comentário: ${item.Comentário || 'N/A'}`, 10, y);
+        y += 20;
+        if (y > 280) {
+          doc.addPage();
+          y = 10;
+        }
+      });
+
+      doc.save('relatorio_inspecao.pdf');
+    }
+
+    document.getElementById('inspectionForm').addEventListener('submit', function (event) {
+      event.preventDefault();
+      const data = [];
+      const date = new Date().toLocaleString();
+
+      sections.forEach((section, sectionIndex) => {
+        section.questions.forEach((question, questionIndex) => {
+          const answer = document.querySelector(`input[name='section${sectionIndex}_q${questionIndex}']:checked`);
+          const comment = document.querySelector(`textarea[name='section${sectionIndex}_q${questionIndex}_comment']`).value || '';
+
+          data.push({
+            Data: date,
+            Seção: section.title,
+            Pergunta: question,
+            Resposta: answer ? answer.value : 'Não respondido',
+            Comentário: comment
+          });
+        });
+      });
+
+      // Gerar Excel
+      const ws = XLSX.utils.json_to_sheet(data);
+      const wb = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(wb, ws, 'Inspeção');
+      XLSX.writeFile(wb, 'inspecao.xlsx');
+
+      // Gerar PDF
+      generatePDF(data);
+    });
+
+    renderSections();
+  </script>
+</body>
+</html>
+
+
+
+
