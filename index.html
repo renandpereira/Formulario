@@ -138,7 +138,7 @@
   <form id="inspectionForm">
     <h1>Formulário de Inspeção</h1>
     <div id="formSections">
-      <!-- Cada seção será adicionada dinamicamente pelo JavaScript -->
+      <!-- As seções e perguntas serão renderizadas dinamicamente aqui -->
     </div>
 
     <!-- Navegação -->
@@ -146,6 +146,10 @@
       <button type="button" id="prevButton" onclick="navigate(-1)" disabled>Anterior</button>
       <button type="button" id="nextButton" onclick="navigate(1)">Próximo</button>
       <button type="submit" id="submitButton" class="hidden">Enviar</button>
+      <button type="button" id="downloadHistoryButton" onclick="downloadHistory()">Baixar Histórico</button>
+    </div>
+    <div id="successMessage" class="hidden" style="color: green; margin-top: 20px;">
+      Formulário enviado com sucesso!
     </div>
   </form>
 
@@ -209,6 +213,7 @@
     ];
 
     let currentSectionIndex = 0;
+    let formData = [];
 
     function renderSections() {
       const formSections = document.getElementById('formSections');
@@ -311,34 +316,6 @@
       document.getElementById('submitButton').classList.toggle('hidden', currentSectionIndex !== totalSections - 1);
     }
 
-    async function generatePDF(data) {
-      const { jsPDF } = window.jspdf;
-      const doc = new jsPDF();
-
-      doc.setFontSize(16);
-      doc.text('Relatório de Inspeção', 105, 20, { align: 'center' });
-
-      let y = 30;
-
-      data.forEach((item, index) => {
-        doc.setFontSize(12);
-        doc.text(`Seção: ${item.Seção}`, 10, y);
-        y += 10;
-        doc.text(`Pergunta: ${item.Pergunta}`, 10, y);
-        y += 10;
-        doc.text(`Resposta: ${item.Resposta}`, 10, y);
-        y += 10;
-        doc.text(`Comentário: ${item.Comentário || 'N/A'}`, 10, y);
-        y += 20;
-        if (y > 280) {
-          doc.addPage();
-          y = 10;
-        }
-      });
-
-      doc.save('relatorio_inspecao.pdf');
-    }
-
     document.getElementById('inspectionForm').addEventListener('submit', function (event) {
       event.preventDefault();
       const data = [];
@@ -350,23 +327,28 @@
           const comment = document.querySelector(`textarea[name='section${sectionIndex}_q${questionIndex}_comment']`).value || '';
 
           data.push({
-            Data: date,
-            Seção: section.title,
-            Pergunta: question,
-            Resposta: answer ? answer.value : 'Não respondido',
-            Comentário: comment
+            date: date,
+            section: section.title,
+            question: question,
+            answer: answer ? answer.value : 'Não respondido',
+            comment: comment
           });
         });
       });
 
-      // Gerar Excel
-      const ws = XLSX.utils.json_to_sheet(data);
-      const wb = XLSX.utils.book_new();
-      XLSX.utils.book_append_sheet(wb, ws, 'Inspeção');
-      XLSX.writeFile(wb, 'inspecao.xlsx');
-
-      // Gerar PDF
-      generatePDF(data);
+      // Enviar os dados para o Google Sheets via Google Apps Script
+      fetch('https://script.google.com/macros/s/AKfycbwPA_HaojDeezOaSwJJYSonNVzSPbHNgoFwf6-zSTwoJ0-bCbb810qYc9W-ydEv2iIH/exec', {
+        method: 'POST',
+        body: JSON.stringify(data), // Envia os dados no formato JSON
+        headers: { 'Content-Type': 'application/json' }
+      })
+      .then(response => response.text())
+      .then(data => {
+        console.log('Data successfully sent to Google Sheets', data);
+      })
+      .catch((error) => {
+        console.error('Error sending data to Google Sheets:', error);
+      });
     });
 
     renderSections();
